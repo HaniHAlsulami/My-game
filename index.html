@@ -484,6 +484,22 @@ td:last-child{text-align:left}
 </div>
 
 <script>
+/* عدّاد الاستجابات: يرسل أحداثاً مجهولة فقط (فتح، بدء، إكمال) إلى Google Sheet.
+   لا يُرسل أي إجابة أو درجة، التزاماً بعبارة «لا نحفظ اسمك ولا إجاباتك». */
+const LOG_URL = "https://script.google.com/macros/s/AKfycbydocUkbkLNHmevEUDtKoeEjnFrvnQuDmVoicrmTMnlXYxK-34WcvfBqoCy2kOOhSx6DQ/exec";
+const SESSION_ID = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+  : Date.now().toString(36) + Math.random().toString(36).slice(2);
+function logEvent(event){
+  try {
+    fetch(LOG_URL, {
+      method: "POST", mode: "no-cors", keepalive: true,
+      headers: {"Content-Type": "text/plain"},
+      body: JSON.stringify({event, session: SESSION_ID,
+        device: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? "جوال" : "كمبيوتر"})
+    }).catch(() => {});
+  } catch (e) {}
+}
+logEvent("scan");
 (() => {
   const STOPS = [
     {name:"محطة الشغف", emo:"😐", anim:"a-meh", text:"قلة الاهتمام أو الاستمتاع بممارسة الأشياء"},
@@ -555,7 +571,7 @@ td:last-child{text-align:left}
       <div class="credit-card"><span class="org-l"><b>الإدارة التنفيذية لتميز الرعاية الصحية</b> · نماذج الرعاية الصحية</span><span>فكرة وتطوير: <b>هناء المحمادي</b><br>مدير مشاريع مسار الصحة النفسية / ماجستير إدارة التمريض</span></div>`, true);
     setTimeout(() => {
       const go = document.getElementById("go");
-      go.onclick = () => { hide(); step = 0; walk(0, question); };
+      go.onclick = () => { logEvent("start"); hide(); step = 0; walk(0, question); };
     }, reduce ? 0 : 240);
   }
 
@@ -588,6 +604,7 @@ td:last-child{text-align:left}
   }
 
   function result(){
+    logEvent("complete");
     banner("✓", "محطة الطمأنينة");
     const phq = answers[0] + answers[1], gad = answers[2] + answers[3];
     const pPos = phq >= 3, gPos = gad >= 3;
